@@ -115,10 +115,10 @@ class MUSER(CLIP):
         if isinstance(self.pretrained, str):
             self.load_state_dict(torch.load(self.pretrained, map_location='cpu'), strict=False)
         elif self.pretrained:
-            self.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'CLIP.pt'),map_location='cpu'), strict=False)
+            self.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pt_weights', 'CLIP.pt'),map_location='cpu'), strict=False)
             print('Spec & Text weights loaded')
             try:
-                self.audio.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'wavelet_encoder.pt'),map_location='cpu'), strict=False)
+                self.audio.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pt_weights', 'wavelet_encoder.pt'),map_location='cpu'), strict=False)
             except RuntimeError as ex:
                 print(ex)
                 print('Audio weights loaded')
