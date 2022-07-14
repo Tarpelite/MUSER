@@ -122,7 +122,6 @@ class GtzanData(Dataset):
         if self.train:
             audio = self.aug_transform(audio.unsqueeze(0), sample_rate=self.sr)   
             audio = audio.squeeze(0)
-            #audio = self.aug_transform(audio)
             
         spec = self.spec_transform(audio)
         image_feature = self.spec_img_transform(spec.repeat(3, 1, 1))
