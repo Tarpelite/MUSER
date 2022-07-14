@@ -6,7 +6,7 @@ from model.audio_encoder.wavelet_encoder import WaveletResNetWithAttention, Wave
 
 
 
-model = MUSER(pretrained=f'/home/renjiawei/share_project_xy/muser/assets/MUSER.pt')
+model = MUSER(pretrained=f'/path/muser/assets/MUSER.pt')
 #print(model)
 
 audio_input = torch.randn(2,160000)
