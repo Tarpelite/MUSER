@@ -30,7 +30,7 @@ class MusicCLIP(pl.LightningModule):
         self.lr = lr
         self.batch = batch_size
         self.epoch = epoch
-        self.model = MUSER(pretrained=f'/path/muser/assets/MUSER.pt')
+        self.model = MUSER(pretrained=f'/path/muser/pt_weights/MUSER.pt')
         self.tag_label =  ['guitar','classical','slow','techno','strings','drums','electronic','rock','fast','piano','ambient','beat','violin','vocal','synth','female','indian','opera','male','singing','vocals','no vocals','harpsichord','loud','quiet','flute','woman','male vocal','no vocal','pop','soft','sitar','solo','man','classic','choir','voice','new age','dance','male voice','female vocal','beats','harp','cello','no voice','weird','country','metal','female voice','choral']
         #self.auroc = torchmetrics.AUROC(num_classes = 50, pos_label = None,average = 'micro')
         #self.ap = torchmetrics.AveragePrecision() 
