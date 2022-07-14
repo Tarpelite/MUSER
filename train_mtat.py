@@ -30,7 +30,7 @@ class MusicCLIP(pl.LightningModule):
         self.lr = lr
         self.batch = batch_size
         self.epoch = epoch
-        self.model = MUSER(pretrained=f'/home/renjiawei/share_project_xy/muser/assets/MUSER.pt')
+        self.model = MUSER(pretrained=f'/path/muser/assets/MUSER.pt')
         self.tag_label =  ['guitar','classical','slow','techno','strings','drums','electronic','rock','fast','piano','ambient','beat','violin','vocal','synth','female','indian','opera','male','singing','vocals','no vocals','harpsichord','loud','quiet','flute','woman','male vocal','no vocal','pop','soft','sitar','solo','man','classic','choir','voice','new age','dance','male voice','female vocal','beats','harp','cello','no voice','weird','country','metal','female voice','choral']
         #self.auroc = torchmetrics.AUROC(num_classes = 50, pos_label = None,average = 'micro')
         #self.ap = torchmetrics.AveragePrecision() 
@@ -72,12 +72,6 @@ class MusicCLIP(pl.LightningModule):
 
         text_input = [[self.template.format(label)] for label in self.tag_label]
         
-        
-        # ((audio_features, _, _), _), _ = self.model(audio=audio_input)
-        # ((_, _, text_features), _), _ = self.model(text=text_input)
-
-        # (audio_features, image_features, text_features), _ = self.model(audio=audio_input, text=text_input, image=img_input)
-        #_, loss = self.model(audio_input, img_input, text_input)
         audio_features = self.model.encode_audio(audio_input)
         text_features = self.model.encode_text(text_input)
         audio_features = audio_features / torch.linalg.norm(audio_features, dim=-1, keepdim=True)  #torch.Size([batchsize, batchsize])
@@ -87,8 +81,6 @@ class MusicCLIP(pl.LightningModule):
 
         logits_audio_text = scale_audio_text * audio_features @ text_features.T   #torch.Size([batchsize, num_class])
 
-        print(logits_audio_text.shape)
-        print(label_input.shape)
         return {'logits': logits_audio_text, 'labels':label_input.long()}
 
 
@@ -126,12 +118,7 @@ class MusicCLIP(pl.LightningModule):
         
         audio_features = self.model.encode_audio(audio_input)
         text_features = self.model.encode_text(text_input)
-        # ((audio_features, _, _), _), _ = self.model(audio=audio_input)
-        # ((_, _, text_features), _), _ = self.model(text=text_input)
 
-        # (audio_features, image_features, text_features), _ = self.model(audio=audio_input, text=text_input, image=img_input)
-        #_, loss = self.model(audio_input, img_input, text_input)
-        
         audio_features = audio_features / torch.linalg.norm(audio_features, dim=-1, keepdim=True)  #torch.Size([batchsize, batchsize])
         text_features = text_features / torch.linalg.norm(text_features, dim=-1, keepdim=True)  #torch.Size([num_class, 1024])
 
