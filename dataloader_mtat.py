@@ -93,14 +93,14 @@ class MTATData(Dataset):
     def __len__(self):
         return len(self.data)
 
-
+    '''
     def convert(self,name):
         path = '/path/tagging/npy_stft'
         npy_path = os.path.join(path, name.split('/')[1][:-3]) + 'npy'
-        return npy_path
-        
+        return npy_path      
     # input :  'a/janine_johnson-chopin_recital-01-waltz_kk_iva_no_12_in_e_major-0-29.mp3' 
     # output: '/path/tagging/npy_stft/janine_johnson-chopin_recital-01-waltz_kk_iva_no_12_in_e_major-0-29.npy'
+    '''
     
     def __getitem__(self, index):       
         id, name = self.data[index].split('\t')     #id = '2583'  #name = 'a/janine_johnson-chopin_recital-01-waltz_kk_iva_no_12_in_e_major-0-29.mp3'
@@ -108,12 +108,9 @@ class MTATData(Dataset):
         label = self.labels[id]
         
         wav_path = os.path.join('/path/tagging', name)
-        
-        # print(wav_path)
-        
+
         audio_torch, sr = torchaudio.load(wav_path)
         
-
         if audio_torch.shape[0]> 1:
             audio_torch = audio_torch.mean(dim=0).unsqueeze(0)
         
@@ -123,10 +120,11 @@ class MTATData(Dataset):
         resample_audio_torch = resample_audio_torch[:, :self.max_audio_length]
         audio = F.pad(resample_audio_torch, (0, self.max_audio_length - resample_audio_torch.shape[1]), "constant", value=0)
         
-        # img_path = self.convert(name)
-        # img_feature = np.load(img_path)
-        # img_feature = torch.from_numpy(img_feature)  #torch[1,224,224]
-        # print(img_feature.shape)
+        '''
+        img_path = self.convert(name)
+        img_feature = np.load(img_path)
+        img_feature = torch.from_numpy(img_feature)
+        '''
 
         if self.train:
             # do data aug
@@ -135,7 +133,6 @@ class MTATData(Dataset):
         
         spec = self.spec_transform(audio)
         image_feature = self.spec_img_transform(spec.repeat(3, 1, 1))
-        # print(image_feature.shape)
         
         return audio, image_feature, label
         
