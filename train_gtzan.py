@@ -34,7 +34,7 @@ class MusicCLIP(pl.LightningModule):
         self.lr = lr
         self.batch = batch_size
         self.epoch = epoch
-        self.model = MUSER(pretrained=f'/path/muser/assets/MUSER.pt')
+        self.model = MUSER(pretrained=f'/path/muser/pt_weights/MUSER.pt')
         self.fc = nn.Linear(1024,10)
         self.genre_label =  ['classical','blues','country','disco','hiphop','jazz','metal','pop','reggae','rock'] 
         self.accurcy = torchmetrics.Accuracy()
