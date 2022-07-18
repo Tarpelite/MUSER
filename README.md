@@ -5,46 +5,38 @@ This is the origin pytorch implementation of the paper in the following paper: [
 
 ## Tri-modal Contrastive Learning
 
+![arch](images/arch.png)
 
-## Requirements
+## Example Usage
 
+```
+python demo.py
+```
 
-
-## Data
-
-
-## Usage
 
 ## Pre-train weights
 
-### For CLIP
-#### bpe_simple_vocab_16e6.txt.gz
-https://drive.google.com/uc?export=download&id=1TvyohfY3Q8DueKLjZlS2pYYEPT4ylNpX
+1. For CLIP, we provide [bpe_simple_vocab_16e6.txt.gz](
+https://drive.google.com/uc?export=download&id=1TvyohfY3Q8DueKLjZlS2pYYEPT4ylNpX) and [CLIP.pt](
+https://drive.google.com/uc?export=download&id=1nwIJAJqyOz3uVjObWB3YvkT4OqJTxWjp)
 
-#### CLIP.pt
-https://drive.google.com/uc?export=download&id=1nwIJAJqyOz3uVjObWB3YvkT4OqJTxWjp
-
-### All weights are pre-trained on AudioSet
-
-#### wavelet_encoder.pt
-https://drive.google.com/uc?export=download&id=1KJD9u3qBfAj9Wzl1w9XbnlyA6_HKu_co
+2. The other weights pre-trained on AudioSet, including [wavelet_encoder.pt](
+https://drive.google.com/uc?export=download&id=1KJD9u3qBfAj9Wzl1w9XbnlyA6_HKu_co) and [MUSER.pt](
+https://drive.google.com/uc?export=download&id=1zNCByQSZE4imueZMYeWJZ80zQbxy2jFB)
 
 
-#### MUSER.pt
-https://drive.google.com/uc?export=download&id=1zNCByQSZE4imueZMYeWJZ80zQbxy2jFB
 
 ## <span id="citelink">Citation</span>
 
 If you find the repository useful in your research, please consider citing the following paper:
 
 ```
-@INPROCEEDINGS{9746131,
+@inproceedings{chen2022learning,
+  title={Learning Music Sequence Representation From Text Supervision},
   author={Chen, Tianyu and Xie, Yuan and Zhang, Shuai and Huang, Shaohan and Zhou, Haoyi and Li, Jianxin},
-  booktitle={ICASSP 2022 - 2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)}, 
-  title={Learning Music Sequence Representation From Text Supervision}, 
+  booktitle={ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  pages={4583--4587},
   year={2022},
-  volume={},
-  number={},
-  pages={4583-4587},
-  doi={10.1109/ICASSP43922.2022.9746131}}
+  organization={IEEE}
+}
 ```
