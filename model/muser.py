@@ -18,15 +18,15 @@ from typing import Optional
 
 ClipFeatures = Tuple[
     Optional[torch.Tensor],  # audio
-    Optional[torch.Tensor],  # spec
+    Optional[torch.Tensor],  # image
     Optional[torch.Tensor]   # audio
 ]
 
 
 ClipLogits = Tuple[
-    Optional[torch.Tensor],  # audio x spec
+    Optional[torch.Tensor],  # audio x image
     Optional[torch.Tensor],  # audio x text
-    Optional[torch.Tensor]   # spec x text
+    Optional[torch.Tensor]   # image x text
 ]
 
 
@@ -40,7 +40,7 @@ class MUSER(CLIP):
 
     def __init__(self,
                  embed_dim: int = 1024,
-                 # spec
+                 # image
                  image_resolution: int = 224,
                  vision_layers: Union[Tuple[int, int, int, int], int] = (3, 4, 6, 3),
                  vision_width: int = 64,
@@ -97,7 +97,7 @@ class MUSER(CLIP):
             pretrained=False
             )
         
-        self.spec = ModifiedResNet(
+        self.visual = ModifiedResNet(
             layers=vision_layers,
             output_dim=embed_dim,
             heads=vision_width * 32 // 64,
@@ -115,10 +115,10 @@ class MUSER(CLIP):
         if isinstance(self.pretrained, str):
             self.load_state_dict(torch.load(self.pretrained, map_location='cpu'), strict=False)
         elif self.pretrained:
-            self.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pt_weights', 'CLIP.pt'),map_location='cpu'), strict=False)
-            print('Spec & Text weights loaded')
+            self.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'CLIP.pt'),map_location='cpu'), strict=False)
+            print('image & Text weights loaded')
             try:
-                self.audio.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pt_weights', 'wavelet_encoder.pt'),map_location='cpu'), strict=False)
+                self.audio.load_state_dict(torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'wavelet_encoder.pt'),map_location='cpu'), strict=False)
             except RuntimeError as ex:
                 print(ex)
                 print('Audio weights loaded')
@@ -132,8 +132,8 @@ class MUSER(CLIP):
     def encode_audio(self, audio: torch.Tensor) -> torch.Tensor:
         return self.audio(audio.to(self.device))
 
-    def encode_spec(self, spec: torch.Tensor) -> torch.Tensor:
-        return self.spec(spec.to(self.device))
+    def encode_image(self, image: torch.Tensor) -> torch.Tensor:
+        return self.visual(image.to(self.device))
 
     def encode_text(self,
                     text: List[List[str]],
@@ -152,12 +152,12 @@ class MUSER(CLIP):
 
     def forward(self,
                 audio: Optional[torch.Tensor] = None,
-                spec: Optional[torch.Tensor] = None,
+                image: Optional[torch.Tensor] = None,
                 text: Optional[List[List[str]]] = None,
                 batch_indices: Optional[torch.Tensor] = None) -> ClipOutput:
 
         audio_features = None
-        spec_features = None
+        image_features = None
         text_features = None
         sample_weights = None
 
@@ -165,9 +165,9 @@ class MUSER(CLIP):
             audio_features = self.encode_audio(audio)
             audio_features = audio_features / audio_features.norm(dim=-1, keepdim=True)
             
-        if spec is not None:
-            spec_features = self.encode_spec(spec)
-            spec_features = spec_features / spec_features.norm(dim=-1, keepdim=True)
+        if image is not None:
+            image_features = self.encode_image(image)
+            image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 
         if text is not None:
             if batch_indices is None:
@@ -180,26 +180,26 @@ class MUSER(CLIP):
             if hasattr(self, 'class_weights') and hasattr(self, 'label_to_class_idx'):
                 sample_weights = torch.stack([sum(self.class_weights[self.label_to_class_idx[label]] for label in entities) for idx, entities in enumerate(text) if idx in batch_indices])
 
-        features: ClipFeatures = (audio_features, spec_features, text_features)
+        features: ClipFeatures = (audio_features, image_features, text_features)
 
         logit_scale_ai = torch.clamp(self.logit_scale_ai.exp(), min=1.0, max=100.0)
         logit_scale_at = torch.clamp(self.logit_scale_at.exp(), min=1.0, max=100.0)
         logit_scale_it = torch.clamp(self.logit_scale_it.exp(), min=1.0, max=100.0)
 
-        logits_audio_spec = None
+        logits_audio_image = None
         logits_audio_text = None
-        logits_spec_text = None
+        logits_image_text = None
 
-        if (audio_features is not None) and (spec_features is not None):
-            logits_audio_spec = logit_scale_ai * audio_features @ spec_features.T
+        if (audio_features is not None) and (image_features is not None):
+            logits_audio_image = logit_scale_ai * audio_features @ image_features.T
 
         if (audio_features is not None) and (text_features is not None):
             logits_audio_text = logit_scale_at * audio_features @ text_features.T
 
-        if (spec_features is not None) and (text_features is not None):
-            logits_spec_text = logit_scale_it * spec_features @ text_features.T
+        if (image_features is not None) and (text_features is not None):
+            logits_image_text = logit_scale_it * image_features @ text_features.T
 
-        logits: ClipLogits = (logits_audio_spec, logits_audio_text, logits_spec_text)
+        logits: ClipLogits = (logits_audio_image, logits_audio_text, logits_image_text)
 
         loss = self.loss_fn(logits, sample_weights)
         if audio is not None and loss is not None:
@@ -208,14 +208,14 @@ class MUSER(CLIP):
         return (features, logits), loss
 
     def loss_fn(self, logits: ClipLogits, sample_weights: Optional[torch.Tensor] = None) -> Optional[torch.Tensor]:
-        logits_audio_spec, logits_audio_text, logits_spec_text = logits
+        logits_audio_image, logits_audio_text, logits_image_text = logits
 
-        if logits_audio_spec is not None:
-            batch_size = logits_audio_spec.shape[0]
+        if logits_audio_image is not None:
+            batch_size = logits_audio_image.shape[0]
         elif logits_audio_text is not None:
             batch_size = logits_audio_text.shape[0]
-        elif logits_spec_text is not None:
-            batch_size = logits_spec_text.shape[0]
+        elif logits_image_text is not None:
+            batch_size = logits_image_text.shape[0]
         else:
             return None
 
@@ -230,8 +230,8 @@ class MUSER(CLIP):
         num_modalities: int = 0
         scale = torch.tensor(1.0, dtype=self.dtype, device=self.device)
 
-        if logits_audio_spec is not None:
-            loss_ai = F.cross_entropy(logits_audio_spec, reference, weight=sample_weights) + F.cross_entropy(logits_audio_spec.transpose(-1, -2), reference, weight=sample_weights)
+        if logits_audio_image is not None:
+            loss_ai = F.cross_entropy(logits_audio_image, reference, weight=sample_weights) + F.cross_entropy(logits_audio_image.transpose(-1, -2), reference, weight=sample_weights)
             loss = loss + loss_ai
             num_modalities += 1
 
@@ -240,8 +240,8 @@ class MUSER(CLIP):
             loss = loss + loss_at
             num_modalities += 1
 
-        if logits_spec_text is not None:
-            loss_it = F.cross_entropy(logits_spec_text, reference, weight=sample_weights) + F.cross_entropy(logits_spec_text.transpose(-1, -2), reference, weight=sample_weights)
+        if logits_image_text is not None:
+            loss_it = F.cross_entropy(logits_image_text, reference, weight=sample_weights) + F.cross_entropy(logits_image_text.transpose(-1, -2), reference, weight=sample_weights)
             loss = loss + loss_it
             num_modalities += 1
 
@@ -249,4 +249,3 @@ class MUSER(CLIP):
             scale = scale * (idx + 1)
 
         return loss / scale
-
